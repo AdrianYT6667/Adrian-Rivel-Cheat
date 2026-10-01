@@ -12,7 +12,8 @@
 
 local WHITELIST_URLS = {
     "https://www.roblox.com/users/11190031157/profile",
-    -- "https://www.roblox.com/users/987654321/profile",
+    --"https://www.roblox.com/users/8445116028/profile",
+    "https://www.roblox.com/users/6021189744/profile",
 }
 
 -- ═══════════════════════════════════════════════
