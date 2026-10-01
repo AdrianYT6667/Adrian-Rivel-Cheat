@@ -1,18 +1,18 @@
 --[[
     ╔══════════════════════════════════════════╗
-    ║       ADRIAN RIVALS CHEAT v1.3           ║
+    ║       ADRIAN RIVALS CHEAT v1.4           ║
     ║       Developer: MR Adrian               ║
-    ║       URL Whitelist + Full Debug         ║
+    ║       Fully Debugged & Clean             ║
     ╚══════════════════════════════════════════╝
 ]]
 
 -- ═══════════════════════════════════════════════
---  ⚙️ WHITELIST URLS - اینجا URL پروفایل بذار
+--  ⚙️ WHITELIST URLS
 -- ═══════════════════════════════════════════════
 
 local WHITELIST_URLS = {
     "https://www.roblox.com/users/11190031157/profile",
-    --"https://www.roblox.com/users/8445116028/profile",
+    "https://www.roblox.com/users/8445116028/profile",
     "https://www.roblox.com/users/6021189744/profile",
 }
 
@@ -26,12 +26,12 @@ local myUserId = LocalPlayer.UserId
 
 local WHITELIST = {}
 for _, url in ipairs(WHITELIST_URLS) do
-    local id = tonumber(url:match("users/(%d+)")) or tonumber(url:match("(%d+)"))
+    local id = tonumber(url:match("users/(%d+)"))
     if id then WHITELIST[id] = true end
 end
 
 -- ═══════════════════════════════════════════════
---  SAFE UI (works on ALL executors)
+--  SAFE UI
 -- ═══════════════════════════════════════════════
 
 local function createSafeUI(name)
@@ -40,9 +40,10 @@ local function createSafeUI(name)
     gui.ResetOnSpawn = false
     gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     gui.DisplayOrder = 9999
+    gui.IgnoreGuiInset = true
 
     local ok = pcall(function() gui.Parent = game:GetService("CoreGui") end)
-    if not ok then
+    if not ok or not gui.Parent then
         pcall(function() gui.Parent = LocalPlayer:WaitForChild("PlayerGui", 5) end)
     end
     return gui
@@ -88,6 +89,7 @@ end
 
 -- ═══════════════════════════════════════════════
 --  ✅ WHITELISTED - FULL CHEAT
+-- ═════════════════════════════Rivals
 -- ═══════════════════════════════════════════════
 
 local RunService = game:GetService("RunService")
@@ -99,17 +101,37 @@ local VirtualUser = game:GetService("VirtualUser")
 
 local Camera = Workspace.CurrentCamera
 
--- SETTINGS
+-- ═══════════ SETTINGS ═══════════
 local Settings = {
-    Aimbot = {Enabled=false, FOV=150, TargetPart="Head", TeamCheck=false, ShowFOV=true, AimKey=Enum.UserInputType.MouseButton2, Prediction=0.12, Method="Mouse", Smoothness=2.5, AimBehindWall=true, HighlightTarget=true},
-    GodMode = {Enabled=false},
-    TriggerBot = {Enabled=false, Delay=0.15, TeamCheck=true, CheckWalls=false, Range=500},
-    ESP = {Enabled=false, Boxes=true, BoxColor=Color3.fromRGB(147,51,234), BoxType="Corner", Names=true, Health=true, HealthType="Left", Distance=true, Tracers=false, TracerOrigin="Bottom", TracerColor=Color3.fromRGB(147,51,234), TeamCheck=false, MaxDistance=2000, BoxThickness=1.5, TextSize=13, Chams=false, ChamsColor=Color3.fromRGB(147,51,234), ChamsTransparency=0.5, ToolESP=false},
-    Visuals = {Fullbright=false, NoFog=false, Crosshair=false, CrosshairSize=8, CrosshairColor=Color3.fromRGB(147,51,234), CrosshairGap=4},
-    Misc = {InfiniteJump=false, NoClip=false, Fly=false, FlySpeed=50, AntiAFK=false, SpeedEnabled=false, SpeedValue=16, JumpEnabled=false, JumpValue=50}
+    Aimbot = {
+        Enabled = false, FOV = 150, TargetPart = "Head", TeamCheck = false,
+        ShowFOV = true, AimKey = Enum.UserInputType.MouseButton2,
+        Prediction = 0.12, Method = "Mouse", Smoothness = 2.5,
+        AimBehindWall = true, HighlightTarget = true
+    },
+    GodMode = {Enabled = false, HealthValue = 99999},
+    TriggerBot = {Enabled = false, Delay = 0.15, TeamCheck = true, CheckWalls = false, Range = 500},
+    ESP = {
+        Enabled = false, Boxes = true, BoxColor = Color3.fromRGB(147,51,234),
+        BoxType = "Corner", Names = true, Health = true, HealthType = "Left",
+        Distance = true, Tracers = false, TracerOrigin = "Bottom",
+        TracerColor = Color3.fromRGB(147,51,234), TeamCheck = false,
+        MaxDistance = 2000, BoxThickness = 1.5, TextSize = 13,
+        Chams = false, ChamsColor = Color3.fromRGB(147,51,234),
+        ChamsTransparency = 0.5, ToolESP = false
+    },
+    Visuals = {
+        Fullbright = false, NoFog = false, Crosshair = false,
+        CrosshairSize = 8, CrosshairColor = Color3.fromRGB(147,51,234), CrosshairGap = 4
+    },
+    Misc = {
+        InfiniteJump = false, NoClip = false, Fly = false, FlySpeed = 50,
+        AntiAFK = false, SpeedEnabled = false, SpeedValue = 16,
+        JumpEnabled = false, JumpValue = 50
+    }
 }
 
--- STATE
+-- ═══════════ STATE ═══════════
 local uiVisible = true
 local aiming = false
 local espObjects = {}
@@ -121,7 +143,7 @@ local infJumpConn, noclipConn, flyConn = nil, nil, nil
 local bodyVelocity, bodyGyro = nil, nil
 local flying = false
 
--- UTILITY
+-- ═══════════ UTILITY ═══════════
 local function clamp(v, mn, mx) return math.max(mn, math.min(mx, v)) end
 
 local function getCharacter(player)
@@ -173,9 +195,10 @@ local function getVelocity(char)
     return Vector3.new(0,0,0)
 end
 
--- ═══ GOD MODE ═══
+-- ═══════════ GOD MODE (FIXED) ═══════════
 local function applyGodMode()
-    if godModeConn then godModeConn:Disconnect() godModeConn = nil end
+    if godModeConn then pcall(function() godModeConn:Disconnect() end) godModeConn = nil end
+
     if Settings.GodMode.Enabled then
         godModeConn = RunService.Heartbeat:Connect(function()
             pcall(function()
@@ -183,8 +206,9 @@ local function applyGodMode()
                 if char then
                     local h = char:FindFirstChildOfClass("Humanoid")
                     if h and h.Health > 0 then
-                        h.MaxHealth = math.huge
-                        h.Health = math.huge
+                        -- عدد بزرگ ثابت به جای math.huge (بهتره برای سازگاری)
+                        h.MaxHealth = Settings.GodMode.HealthValue
+                        h.Health = Settings.GodMode.HealthValue
                     end
                 end
             end)
@@ -194,13 +218,16 @@ local function applyGodMode()
             local char = LocalPlayer.Character
             if char then
                 local h = char:FindFirstChildOfClass("Humanoid")
-                if h then h.MaxHealth = 100 h.Health = 100 end
+                if h then
+                    h.MaxHealth = 100
+                    h.Health = 100
+                end
             end
         end)
     end
 end
 
--- ═══ TRIGGER BOT ═══
+-- ═══════════ TRIGGER BOT (FIXED) ═══════════
 local function getTriggerTarget()
     local ok, unitRay = pcall(function()
         local mp = UserInputService:GetMouseLocation()
@@ -217,10 +244,13 @@ local function getTriggerTarget()
     if not ok2 or not result then return nil end
 
     local char = result.Instance.Parent
-    while char and not char:FindFirstChildOfClass("Humanoid") do
+    local attempts = 0
+    while char and attempts < 5 do
+        if char:FindFirstChildOfClass("Humanoid") then break end
         char = char.Parent
+        attempts = attempts + 1
     end
-    if not char then return nil end
+    if not char or not char:FindFirstChildOfClass("Humanoid") then return nil end
 
     local player = Players:GetPlayerFromCharacter(char)
     if not player or player == LocalPlayer then return nil end
@@ -238,18 +268,30 @@ local function getTriggerTarget()
 end
 
 local function doShoot()
-    pcall(function() mouse1click() end)
+    -- روش ۱: mouse1click
+    local ok = pcall(function() mouse1click() end)
+    if not ok then
+        -- روش ۲: press/release
+        pcall(function()
+            mouse1press()
+            task.wait(0.01)
+            mouse1release()
+        end)
+    end
 end
 
--- ═══ AIMBOT ═══
-local fovCircle = Drawing and Drawing.new("Circle") or nil
-if fovCircle then
-    fovCircle.Thickness = 1.5
-    fovCircle.Filled = false
-    fovCircle.Color = Color3.fromRGB(147,51,234)
-    fovCircle.Visible = false
-    fovCircle.Radius = 150
-    fovCircle.NumSides = 100
+-- ═══════════ AIMBOT ═══════════
+local fovCircle = nil
+if Drawing then
+    pcall(function()
+        fovCircle = Drawing.new("Circle")
+        fovCircle.Thickness = 1.5
+        fovCircle.Filled = false
+        fovCircle.Color = Color3.fromRGB(147,51,234)
+        fovCircle.Visible = false
+        fovCircle.Radius = 150
+        fovCircle.NumSides = 100
+    end)
 end
 
 local targetHighlight = Instance.new("Highlight")
@@ -259,7 +301,8 @@ targetHighlight.OutlineColor = Color3.fromRGB(200,120,255)
 targetHighlight.OutlineTransparency = 0
 targetHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 targetHighlight.Enabled = false
-targetHighlight.Parent = createSafeUI("AdrianHl") or game:GetService("CoreGui")
+-- Highlight باید تو Workspace باشه تا کار کنه
+pcall(function() targetHighlight.Parent = Workspace end)
 
 local function getBestTarget()
     local mousePos = UserInputService:GetMouseLocation()
@@ -316,7 +359,7 @@ local function aimAtTarget(target)
     end
 end
 
--- ═══ ESP ═══
+-- ═══════════ ESP ═══════════
 local function createESPObjects(player)
     if espObjects[player] then return end
     local objs = {cornerLines = {}}
@@ -363,8 +406,7 @@ local function createESPObjects(player)
     objs.highlight.OutlineTransparency = 0.2
     objs.highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     objs.highlight.Enabled = false
-    pcall(function() objs.highlight.Parent = game:GetService("CoreGui") end)
-    if not objs.highlight.Parent then objs.highlight.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+    pcall(function() objs.highlight.Parent = Workspace end)
 
     espObjects[player] = objs
 end
@@ -377,7 +419,7 @@ local function removeESPObjects(player)
             if objs[k] then objs[k]:Remove() end
         end
         for _, l in ipairs(objs.cornerLines or {}) do pcall(function() l:Remove() end) end
-        if objs.highlight then objs.highlight:Destroy() end
+        if objs.highlight then pcall(function() objs.highlight:Destroy() end) end
     end)
     espObjects[player] = nil
 end
@@ -438,7 +480,7 @@ local function renderESP()
                                     {Vector2.new(bx,boxY), Vector2.new(bx,boxY+cl)},
                                     {Vector2.new(bx+bw,boxY), Vector2.new(bx+bw-cl,boxY)},
                                     {Vector2.new(bx+bw,boxY), Vector2.new(bx+bw,boxY+cl)},
-                                    {Vector2.new(bx,boxY+bh), Vector2.new(bx+cl,boxY+bh)},
+                                    {Vector2.new(bx,boxY+bh), Vector2.newnew(bx+cl,boxY+bh)},
                                     {Vector2.new(bx,boxY+bh), Vector2.new(bx,boxY+bh-cl)},
                                     {Vector2.new(bx+bw,boxY+bh), Vector2.new(bx+bw-cl,boxY+bh)},
                                     {Vector2.new(bx+bw,boxY+bh), Vector2.new(bx+bw,boxY+bh-cl)},
@@ -471,9 +513,10 @@ local function renderESP()
                                 local fh = bh * hp
                                 objs.healthFill.Visible = true
                                 objs.healthFill.Position = Vector2.new(bx-6, boxY+(bh-fh))
+                                objs.healthFill.Health = 2
                                 objs.healthFill.Size = Vector2.new(2, fh)
                                 objs.healthFill.Color = hpC
-                            else
+                        else
                                 objs.healthBG.Visible = true
                                 objs.healthBG.Position = Vector2.new(bx, boxY+bh+14)
                                 objs.healthBG.Size = Vector2.new(bw, 4)
@@ -537,7 +580,7 @@ local function renderESP()
     end
 end
 
--- ═══ VISUALS ═══
+-- ═══════════ VISUALS ═══════════
 local originalLighting = {
     Brightness = Lighting.Brightness,
     ClockTime = Lighting.ClockTime,
@@ -604,7 +647,7 @@ local function renderCrosshair()
     end
 end
 
--- ═══ MISC ═══
+-- ═══════════ MISC ═══════════
 local function stopFly()
     flying = false
     if bodyVelocity then pcall(function() bodyVelocity:Destroy() end) bodyVelocity = nil end
@@ -612,7 +655,7 @@ local function stopFly()
 end
 
 local function applyMisc()
-    if infJumpConn then infJumpConn:Disconnect() infJumpConn = nil end
+    if infJumpConn then pcall(function() infJumpConn:Disconnect() end) infJumpConn = nil end
     if Settings.Misc.InfiniteJump then
         infJumpConn = UserInputService.JumpRequest:Connect(function()
             local char = LocalPlayer.Character
@@ -632,7 +675,7 @@ local function applyMisc()
         end)
     end
 
-    if noclipConn then noclipConn:Disconnect() noclipConn = nil end
+    if noclipConn then pcall(function() noclipConn:Disconnect() end) noclipConn = nil end
     if Settings.Misc.NoClip then
         noclipConn = RunService.Stepped:Connect(function()
             local char = LocalPlayer.Character
@@ -644,7 +687,7 @@ local function applyMisc()
         end)
     end
 
-    if flyConn then flyConn:Disconnect() flyConn = nil end
+    if flyConn then pcall(function() flyConn:Disconnect() end) flyConn = nil end
     if Settings.Misc.Fly then
         stopFly()
         flying = true
@@ -681,10 +724,7 @@ local function applyMisc()
     end
 end
 
--- ═══════════════════════════════════════════════
---  UI
--- ═══════════════════════════════════════════════
-
+-- ═══════════ UI ═══════════
 local Accent = Color3.fromRGB(147,51,234)
 local BG = Color3.fromRGB(8,8,12)
 local SidebarBG = Color3.fromRGB(12,12,18)
@@ -694,7 +734,7 @@ local TxtC = Color3.fromRGB(235,235,245)
 local SubTxt = Color3.fromRGB(130,130,155)
 local StrokeC = Color3.fromRGB(35,35,50)
 
-local ScreenGui = createSafeUI("AdrianCheatV13")
+local ScreenGui = createSafeUI("AdrianCheatV14")
 
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 680, 0, 480)
@@ -714,7 +754,6 @@ MainStroke.Color = StrokeC
 MainStroke.Thickness = 1.5
 MainStroke.Parent = Main
 
--- Title
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1, 0, 0, 48)
 TitleBar.BackgroundColor3 = SidebarBG
@@ -775,7 +814,7 @@ local VersionLabel = Instance.new("TextLabel")
 VersionLabel.Size = UDim2.new(0, 40, 1, 0)
 VersionLabel.Position = UDim2.new(0, 195, 0, 0)
 VersionLabel.BackgroundTransparency = 1
-VersionLabel.Text = "v1.3"
+VersionLabel.Text = "v1.4"
 VersionLabel.TextColor3 = Accent
 VersionLabel.TextSize = 11
 VersionLabel.Font = Enum.Font.GothamBold
@@ -817,7 +856,6 @@ Sidebar.BorderSizePixel = 0
 Sidebar.Parent = Main
 
 local tabs = {}
-local currentTab = nil
 
 local function selectTab(name)
     local tab = tabs[name]
@@ -832,7 +870,6 @@ local function selectTab(name)
     tab.button.BackgroundColor3 = Color3.fromRGB(25,18,40)
     tab.accentBar.Visible = true
     tab.textLabel.TextColor3 = Accent
-    currentTab = name
 end
 
 local function createTab(name, icon, order)
@@ -1233,6 +1270,7 @@ createToggle(godPage, "Enable God Mode", false, function(v)
     Settings.GodMode.Enabled = v
     applyGodMode()
 end)
+createSlider(godPage, "Health Value", 1000, 999999, 99999, 0, function(v) Settings.GodMode.HealthValue = v end)
 
 -- TRIGGER BOT
 local triggerPage = createTab("Trigger Bot", "🔫", 3)
@@ -1341,7 +1379,7 @@ local infoText = Instance.new("TextLabel")
 infoText.Size = UDim2.new(1, -20, 1, -10)
 infoText.Position = UDim2.new(0, 10, 0, 5)
 infoText.BackgroundTransparency = 1
-infoText.Text = "Adrian Rivals Cheat v1.3\nDeveloper: MR Adrian\n\nUI Toggle: Right Shift\nAimbot: Right Click (Hold)"
+infoText.Text = "Adrian Rivals Cheat v1.4\nDeveloper: MR Adrian\n\nUI Toggle: Right Shift\nAimbot: Right Click (Hold)"
 infoText.TextColor3 = SubTxt
 infoText.TextSize = 11
 infoText.Font = Enum.Font.Gotham
@@ -1371,10 +1409,10 @@ unloadBtn.MouseButton1Click:Connect(function()
     pcall(function() targetHighlight:Destroy() end)
     for _, l in ipairs(crosshairLines) do pcall(function() l:Remove() end) end
     for _, c in ipairs(connections) do pcall(function() c:Disconnect() end) end
-    if infJumpConn then infJumpConn:Disconnect() end
-    if noclipConn then noclipConn:Disconnect() end
-    if flyConn then flyConn:Disconnect() end
-    if godModeConn then godModeConn:Disconnect() end
+    if infJumpConn then pcall(function() infJumpConn:Disconnect() end) end
+    if noclipConn then pcall(function() noclipConn:Disconnect() end) end
+    if flyConn then pcall(function() flyConn:Disconnect() end) end
+    if godModeConn then pcall(function() godModeConn:Disconnect() end) end
     stopFly()
     pcall(function()
         Lighting.Brightness = originalLighting.Brightness
@@ -1420,6 +1458,7 @@ end)
 
 -- ═══════════════════════════════════════════════
 --  PLAYERS
+-- ═══════════════ یکی
 -- ═══════════════════════════════════════════════
 
 for _, player in ipairs(Players:GetPlayers()) do
@@ -1487,7 +1526,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
         renderESP()
         renderCrosshair()
 
-        -- Speed/Jump maintenance
+        -- Speed/Jump
         if Settings.Misc.SpeedEnabled then
             local char = LocalPlayer.Character
             if char then
@@ -1506,4 +1545,4 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
     end)
 end))
 
-print("[Adrian Rivals Cheat v1.3] Loaded for " .. LocalPlayer.Name)
+print("[Adrian Rivals Cheat v1.4] Loaded for " .. LocalPlayer.Name)
